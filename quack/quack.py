@@ -58,7 +58,6 @@ def _fetch_modules(config, specific_module=None):
     modules = '.quack/modules'
     ignore_list = []
     _remove_dir('.git/modules/')
-    _create_dir(modules)
     if config.get('gitignore') and os.path.isfile('.gitignore'):
         with open('.gitignore', 'r') as file_pointer:
             ignore_list = list(set(file_pointer.read().split('\n')))
@@ -66,6 +65,9 @@ def _fetch_modules(config, specific_module=None):
     for module in module_list.items():
         if specific_module and specific_module != module[0]:
             continue
+        
+        folder_name = module[1].get('foldername', module[0])
+        _create_dir(folder_name)
         tag = module[1].get('tag')
         hexsha = module[1].get('hexsha')
         if tag and hexsha:
@@ -73,7 +75,7 @@ def _fetch_modules(config, specific_module=None):
             continue
         print('Cloning: ' + module[1]['repository'])
         sub_module = repo.create_submodule(
-            module[0], modules + '/' + module[0],
+            module[0], modules + '/' + folder_name,
             url=module[1]['repository'],
             branch=module[1].get('branch', 'master')
         )
@@ -81,28 +83,28 @@ def _fetch_modules(config, specific_module=None):
         if tag:
             subprocess.call(
                 ['git', 'checkout', '--quiet', 'tags/' + tag],
-                cwd=modules + '/' + module[0])
+                cwd=modules + '/' + folder_name)
             tag = ' (' + tag + ') '
         elif hexsha:
             subprocess.call(
                 ['git', 'checkout', '--quiet', hexsha],
-                cwd=modules + '/' + module[0])
+                cwd=modules + '/' + folder_name)
             hexsha = ' (' + hexsha + ')'
         else:
             hexsha = ' (' + sub_module.hexsha + ')'
 
         path = module[1].get('path', '')
-        from_path = '%s/%s/%s' % (modules, module[0], path)
+        from_path = '%s/%s/%s' % (modules, folder_name, path)
         is_exists = os.path.exists(from_path)
         if (path and is_exists) or not path:
             if module[1].get('isfile'):
-                if os.path.isfile(module[0]):
-                    os.remove(module[0])
-                shutil.copyfile(from_path, module[0])
+                if os.path.isfile(folder_name):
+                    os.remove(folder_name)
+                shutil.copyfile(from_path, folder_name)
             else:
-                _remove_dir(module[0])
+                _remove_dir(folder_name)
                 shutil.copytree(
-                    from_path, module[0],
+                    from_path, folder_name,
                     ignore=shutil.ignore_patterns('.git*'))
         elif not is_exists:
             print('%s folder does not exists. Skipped.' % path)
@@ -113,13 +115,13 @@ def _fetch_modules(config, specific_module=None):
             subprocess.call('rm .gitmodules'.split())
             subprocess.call('git rm --quiet --cached .gitmodules'.split())
 
-        print('Cloned: ' + module[0] + (tag or hexsha))
+        print('Cloned: ' + folder_name + (tag or hexsha))
 
         if config.get('gitignore'):
             with open('.gitignore', 'a') as file_pointer:
-                if module[0] not in ignore_list:
-                    file_pointer.write('\n' + module[0])
-                    ignore_list.append(module[0])
+                if folder_name not in ignore_list:
+                    file_pointer.write('\n' + folder_name)
+                    ignore_list.append(folder_name)
 
 
 def _clean_modules(config, specific_module=None):
@@ -127,8 +129,13 @@ def _clean_modules(config, specific_module=None):
     for module in config.get('modules').items():
         if specific_module and specific_module != module[0]:
             continue
-        if _remove_dir(module[0]):
-            print('Cleaned', module[0])
+
+        folder_name = module[1].get('foldername')
+        if not folder_name:
+            continue
+
+        if _remove_dir(folder_name):
+            print('Cleaned', folder_name)
 
 
 def _run_nested_quack(dependency):

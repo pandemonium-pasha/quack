@@ -59,6 +59,14 @@ modules:
   toggleicon:
     repository: https://github.com/zonito/z-toggleicon.git
     tag: v1.0
+  dbschema-master:
+    repository: https://github.com/zonito/PyAnalytics.git
+    path: db_projects/project1
+    branch: master
+  dbschema-dev:
+    repository: https://github.com/zonito/PyAnalytics.git
+    path: db_projects/project1
+    branch: dev
 
 profiles:
   init:
@@ -71,6 +79,10 @@ profiles:
       quack: 'pyanalytic/build.yaml:update'
   clean:
     tasks: ['-modules']
+  updatedb-master:
+    tasks: ['modules:dbschema-master']
+  updatedb-dev:
+    tasks: ['modules:dbschema-dev']
 ```
 
 ##### Adding quack plugins to your project
@@ -85,7 +97,7 @@ Add a file called quack.yaml to the root of your project. The pre-commit config 
 | **description** | Project description (Optional)                                  |
 | **version**     | Project version (Optional)                                      |
 | **gitignore**   | Update git ignore for sub module included (Optional, default: true)  |
-| **modules**     | Declared modules used within your project. <ul><li>`folder name`:</li><ul><li>`repository`: Git repository url.</li><li>`path`: module path within given git repository</li><li>`branch`: provide branch name to checkout from git repository.</li><li>`hexsha`: Provide sha1 key to checkout till specific commits</li><li>`tag`: Provide tag to checkout till specific release tag</li><li>`isfile`: Copy file instead of creating folder.</li></ul>|
+| **modules**     | Declared modules used within your project. <ul><li>`module name`:</li><ul><li>`repository`: Git repository url.</li><li>`path`: module path within given git repository</li><li>`branch`: provide branch name to checkout from git repository.</li><li>`hexsha`: Provide sha1 key to checkout till specific commits</li><li>`tag`: Provide tag to checkout till specific release tag</li><li>`isfile`: Copy file instead of creating folder.</li><li>`foldername`: Destination folder to copy the file to. If this is blank, module name will be used as the folder name</li></ul>|
 | **profiles**    | List of profiles for keep things separate for different stuffs. <ul><li> `task_name`: Default task (`init` task mandatory) </li> <ul><li>`tasks`: List of tasks or execute nested quack. </li><li>`dependencies`: List of dependencies before executing tasks</li><ul><li>`quack`: Nested quack. (Syntax: `module/quack_config.yaml:profile_name`)</li></ul></ul></ul>|
 
 ##### Command
